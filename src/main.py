@@ -29,7 +29,8 @@ def __create_parser():
 
 def process_data(
         df: pd.DataFrame, binary_data_col: int, 
-        test_size: float, random_state: int
+        test_size: float, random_state: int,
+        nb_of_features: int
         ) -> tuple[np.ndarray]:
     X_train, X_test, y_train, y_test = split_data(df, test_size, random_state)
     X_train_sm, y_train_sm = oversample_data(X_train, y_train)
@@ -39,7 +40,7 @@ def process_data(
     X_train_sm.iloc[:, 1:] = X_train_sc
     X_test = X_test.astype(float)
     X_test.iloc[:, 1:] = X_test_sc
-    X_train_slct, X_test_slct = select_features(X_train_sc, X_test_sc, y_train_sm)
+    X_train_slct, X_test_slct = select_features(X_train_sc, X_test_sc, y_train_sm, nb_of_features)
 
     return X_train_slct, X_test_slct, y_train_sm, y_test
 
@@ -53,7 +54,11 @@ def main(args):
     df = pd.read_csv(args['data_file'], header=header, index_col=index)
     if len(header) > 1:
         df.columns = df.columns.droplevel()
-    X_train, X_test, y_train, y_test = process_data(df, conf['binary_columns'], conf['test_size'], random_state)
+    X_train, X_test, y_train, y_test = process_data(df, 
+                                                    conf['binary_columns'], 
+                                                    conf['test_size'], 
+                                                    random_state, 
+                                                    conf['nb_of_features'])
 
     svc_clf = SVC()
     svc_clf.fit(X_train, y_train)

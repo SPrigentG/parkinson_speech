@@ -50,8 +50,22 @@ def normalize_data(train_data: pd.DataFrame, test_data: pd.DataFrame):
     return train_data_scaled, test_data_scaled
 
 
-def select_features(train_data, test_data, train_target):
-    selector = SelectKBest(score_func=f_classif, k=50)
+def select_features(
+        train_data: pd.DataFrame, test_data: pd.DataFrame,
+        train_target: pd.Series, nb_of_features: int = 50
+        ) -> tuple[pd.DataFrame]:
+    """Reduce complexity of dataset by selecting best features based on scoring on F-test
+
+    Args:
+        train_data (pd.DataFrame): data on which selection will be based and applied
+        test_data (pd.DataFrame): data where selection will also be applied
+        train_target (pd.Series): class corresponding to the train_data
+        nb_of_features (int, optional): number of features to keep. Defaults to 50.
+
+    Returns:
+        tuple[pd.DataFrame]: train_data and test_data reduced to the number of features required
+    """
+    selector = SelectKBest(score_func=f_classif, k=nb_of_features)
     train_slct = selector.fit_transform(train_data, train_target)
     test_slct = selector.transform(test_data)
 

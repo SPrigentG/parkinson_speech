@@ -6,3 +6,5 @@ test_size: 0.2
 binary_columns: 1
 
 random_state: 1
+
+nb_of_features: 50
