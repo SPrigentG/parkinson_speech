@@ -5,16 +5,13 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import SelectKBest, f_classif
 
 
-def split_data(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+def split_data(
+        df: pd.DataFrame, test_size: float, random_state: int
+        ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
     id_class = df.iloc[:, -1]
-    number_of_individuals = len(id_class)
-    id_class = id_class.iloc[range(0, len(number_of_individuals), 3)]
-    train_id, test_id = train_test_split(range(0, number_of_individuals),
-                                         test_size=0.2,
-                                         random_state=42,
-                                         stratify=id_class)
-    train = df.loc[train_id].sample(frac=1)
-    test = df.loc[test_id].sample(frac=1)
+    train_id, test_id = split_id(id_class, test_size, random_state)
+    train = df.loc[train_id].sample(frac=1, random_state=random_state)
+    test = df.loc[test_id].sample(frac=1, random_state=random_state)
     X_train = train.iloc[:, :-1]
     y_train = train.iloc[:, -1]
     X_test = test.iloc[:, :-1]
@@ -25,6 +22,18 @@ def split_data(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series,
 
     return X_train, X_test, y_train, y_test
 
+
+def split_id(target, test_size, random_state):
+    number_of_individuals = len(target)
+    number_of_replicates = target.reset_index().groupby('index').count().iloc[0,0]
+    if number_of_replicates > 1:
+        target = target.iloc[range(0, number_of_individuals, number_of_replicates)]
+    train_id, test_id = train_test_split(range(0, len(target)),
+                                         test_size=test_size,
+                                         random_state=random_state,
+                                         stratify=target)
+
+    return train_id, test_id
 
 def oversample_data(imb_data, target):
     smt = SMOTE()
