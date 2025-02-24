@@ -39,7 +39,7 @@ def save_cls_report(
         path (str): path to save report
         verbose (bool, optional): 
             if True, print classification report in terminal.
-            Default to True.
+            Defaults to True.
     """
     cls = classification_report(y_test, y_pred, output_dict=True)
     cls = pd.DataFrame(cls).transpose().round(2)

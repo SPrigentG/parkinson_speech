@@ -75,7 +75,8 @@ def process_data(
 
 def plot_results(
         y_test: np.ndarray, y_pred: np.ndarray,
-        folder_path: str, model_name: str
+        folder_path: str, model_name: str,
+        verbose: bool = True
         ) -> None:
     """Compute confusion matrix, ROC curve and
     classification report based on prediction and save
@@ -86,6 +87,9 @@ def plot_results(
         y_pred (np.ndarray): predicted labes
         folder_path (str): output folder
         model_name (str): name given to the model
+        verbose (bool, optional): 
+            if True, print classification report in terminal.
+            Defaults to True.
     """
     base_path = join(folder_path, model_name)
     plot_confusion_matrix(y_test,
@@ -96,7 +100,8 @@ def plot_results(
              base_path + '_roc.png')
     save_cls_report(y_test,
                     y_pred,
-                    base_path + '_cls.csv')
+                    base_path + '_cls.csv',
+                    verbose)
 
 
 def main(args):
@@ -122,22 +127,23 @@ def main(args):
 
     folder_path = 'out'
     makedirs(folder_path, exist_ok=True)
+    verbose = conf['verbose']
 
     svc_clf = SVC()
     svc_clf.fit(X_train, y_train)
     y_pred_svc = svc_clf.predict(X_test)
-    plot_results(y_test, y_pred_svc, folder_path, 'svc')
+    plot_results(y_test, y_pred_svc, folder_path, 'svc', verbose)
 
     ada_clf = AdaBoostClassifier(n_estimators=100)
     ada_clf.fit(X_train, y_train)
     y_pred_ada = ada_clf.predict(X_test)
-    plot_results(y_test, y_pred_ada, folder_path, 'ada')
+    plot_results(y_test, y_pred_ada, folder_path, 'ada', verbose)
 
     mlp_clf = MLPClassifier(hidden_layer_sizes=(512, 256, 128, 64),
                             early_stopping=True)
     mlp_clf.fit(X_train, y_train)
     y_pred_mlp = mlp_clf.predict(X_test)
-    plot_results(y_test, y_pred_mlp, folder_path, 'mlp')
+    plot_results(y_test, y_pred_mlp, folder_path, 'mlp', verbose)
 
 
 if __name__ == '__main__':

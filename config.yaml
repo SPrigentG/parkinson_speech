@@ -22,3 +22,6 @@ random_state: 1 # int
 # Number of features selected to train model.
 # If invalid input is given, all features will be kept.
 nb_of_features: 50
+
+# If True, show classification report in terminal.
+verbose: True
