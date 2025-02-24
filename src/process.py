@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
 from imblearn.over_sampling import SMOTE
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import SelectKBest, f_classif
 
@@ -40,7 +40,7 @@ def split_data(
 
 
 def split_id(
-        target: pd.Series, test_size: float, 
+        target: pd.Series, test_size: float,
         random_state: int | None = None
         ) -> tuple[pd.Series]:
     """Split id in order to keep replicates from an id together in same dataset
@@ -107,7 +107,7 @@ def normalize_non_binary_data(
 
 
 def normalize_data(
-        train_data: pd.DataFrame, test_data: pd.DataFrame, 
+        train_data: pd.DataFrame, test_data: pd.DataFrame,
         binary_features_col: list[str] | str
         ) -> tuple[pd.DataFrame]:
     """Calculate and apply normalization to train dataset
@@ -131,10 +131,10 @@ def normalize_data(
         train_data.drop(columns=binary_features_col, inplace=True)
         test_binary_feat = test_data[binary_features_col]
         test_data.drop(columns=binary_features_col, inplace=True)
-    except:
+    except ValueError:
         train_binary_feat = pd.DataFrame()
         test_binary_feat = pd.DataFrame()
-    
+
     train_data_sc, test_data_sc = normalize_non_binary_data(train_data, test_data)
 
     train_data_sc = pd.DataFrame(train_data_sc, columns=train_data.columns)
@@ -163,7 +163,7 @@ def select_features(
     """
     if not isinstance(nb_of_features, int):
         nb_of_features = train_data.shape[1]
-        
+
     selector = SelectKBest(score_func=f_classif, k=nb_of_features)
     train_slct = selector.fit_transform(train_data, train_target)
     test_slct = selector.transform(test_data)

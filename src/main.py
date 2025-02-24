@@ -5,7 +5,11 @@ from omegaconf import OmegaConf
 from sklearn.svm import SVC
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, classification_report
+from sklearn.metrics import (
+    confusion_matrix,
+    ConfusionMatrixDisplay,
+    classification_report
+)
 
 from process import split_data, oversample_data, normalize_data, select_features
 
@@ -20,7 +24,7 @@ def __create_parser():
     parser.add_argument('-c', '--config_file',
                         action="store", type=str,
                         help='path to config file to use',
-                        default='config.yaml') 
+                        default='config.yaml')
     args = parser.parse_args()
 
     return args
@@ -28,7 +32,7 @@ def __create_parser():
 
 def process_data(
         df: pd.DataFrame, target_col: str,
-        binary_data_col: int, 
+        binary_data_col: int,
         test_size: float, random_state: int,
         nb_of_features: int
         ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
@@ -62,15 +66,16 @@ def process_data(
     X_train_sc, X_test_sc = normalize_data(X_train_sm,
                                            X_test,
                                            binary_data_col)
-    X_train_slct, X_test_slct = select_features(X_train_sc, 
-                                                X_test_sc, 
-                                                y_train_sm, 
+    X_train_slct, X_test_slct = select_features(X_train_sc,
+                                                X_test_sc,
+                                                y_train_sm,
                                                 nb_of_features)
 
     return X_train_slct, X_test_slct, y_train_sm, y_test
 
 
 def main(args):
+    """Load data, process it, trains 3 models and displays results"""
     conf = OmegaConf.load(args['config_file'])
     header = list(conf['header'])
     index = list(conf['index'])
@@ -81,9 +86,9 @@ def main(args):
         df.columns = df.columns.droplevel()
     X_train, X_test, y_train, y_test = process_data(df,
                                                     conf['target_col'],
-                                                    conf['binary_columns'], 
-                                                    conf['test_size'], 
-                                                    random_state, 
+                                                    conf['binary_columns'],
+                                                    conf['test_size'],
+                                                    random_state,
                                                     conf['nb_of_features'])
 
     svc_clf = SVC()
@@ -102,7 +107,8 @@ def main(args):
     cm_plot_ada.plot()
     print(classification_report(y_test, y_pred_ada))
 
-    mlp_clf = MLPClassifier(hidden_layer_sizes=(512, 256, 128, 64), early_stopping=True)
+    mlp_clf = MLPClassifier(hidden_layer_sizes=(512, 256, 128, 64),
+                            early_stopping=True)
     mlp_clf.fit(X_train, y_train)
     y_pred_mlp = mlp_clf.predict(X_test)
     cm_mlp = confusion_matrix(y_test, y_pred_mlp)

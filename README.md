@@ -19,7 +19,7 @@ You can set the following arguments:
 python main.py --data_file <path_to_a_data_file> --config_file <path_to_a_config_file> 
 ```
 
-## Main processing steps
+## Processing steps
 Data will be loaded from file defined by the data_file argument. If header is multiple, levels will be dropped to simplify data processing. Because of this, any feature name given in the config file should only be the name of the feature at the lowest level. If a higher name is given, it will not be recognized.
 
 ### Split data
@@ -43,3 +43,9 @@ Feature selection is made based on the train dataset and then applied to the tes
 
 ### Results
 Result from 3 models are displayed as the confusion matrix for each model and their respective classification report and save to the out folder.
+
+## Testing
+### Usage
+```
+pytest 
+```
