@@ -1,17 +1,14 @@
 import argparse
+from os import makedirs
 
 import pandas as pd
 from omegaconf import OmegaConf
 from sklearn.svm import SVC
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn.metrics import (
-    confusion_matrix,
-    ConfusionMatrixDisplay,
-    classification_report
-)
 
 from process import split_data, oversample_data, normalize_data, select_features
+from plot import plot_confusion_matrix, save_cls_report
 
 
 def __create_parser():
@@ -82,8 +79,12 @@ def main(args):
     random_state = conf['random_state']
 
     df = pd.read_csv(args['data_file'], header=header, index_col=index)
-    if len(header) > 1:
+
+    nb_of_header = len(header)
+    while nb_of_header > 1:
         df.columns = df.columns.droplevel()
+        nb_of_header -= 1
+
     X_train, X_test, y_train, y_test = process_data(df,
                                                     conf['target_col'],
                                                     conf['binary_columns'],
@@ -91,30 +92,26 @@ def main(args):
                                                     random_state,
                                                     conf['nb_of_features'])
 
+    makedirs('out/', exist_ok=True)
+
     svc_clf = SVC()
     svc_clf.fit(X_train, y_train)
     y_pred_svc = svc_clf.predict(X_test)
-    cm_svc = confusion_matrix(y_test, y_pred_svc)
-    cm_plot_svc = ConfusionMatrixDisplay(cm_svc)
-    cm_plot_svc.plot()
-    print(classification_report(y_test, y_pred_svc))
+    plot_confusion_matrix(y_test, y_pred_svc, 'out/cm_SVC.png')
+    save_cls_report(y_test, y_pred_svc, 'out/cls_SVC.csv')
 
     ada_clf = AdaBoostClassifier(n_estimators=100)
     ada_clf.fit(X_train, y_train)
     y_pred_ada = ada_clf.predict(X_test)
-    cm_ada = confusion_matrix(y_test, y_pred_ada)
-    cm_plot_ada = ConfusionMatrixDisplay(cm_ada)
-    cm_plot_ada.plot()
-    print(classification_report(y_test, y_pred_ada))
+    plot_confusion_matrix(y_test, y_pred_ada, 'out/cm_Ada.png')
+    save_cls_report(y_test, y_pred_svc, 'out/cls_Ada.csv')
 
     mlp_clf = MLPClassifier(hidden_layer_sizes=(512, 256, 128, 64),
                             early_stopping=True)
     mlp_clf.fit(X_train, y_train)
     y_pred_mlp = mlp_clf.predict(X_test)
-    cm_mlp = confusion_matrix(y_test, y_pred_mlp)
-    cm_plot_mlp = ConfusionMatrixDisplay(cm_mlp)
-    cm_plot_mlp.plot()
-    print(classification_report(y_test, y_pred_mlp))
+    plot_confusion_matrix(y_test, y_pred_mlp, 'out/cm_MLP.png')
+    save_cls_report(y_test, y_pred_svc, 'out/cls_MLP.csv')
 
 
 if __name__ == '__main__':

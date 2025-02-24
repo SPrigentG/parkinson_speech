@@ -1,4 +1,5 @@
 imbalanced_learn==0.13.0
+matplotlib==3.10.0
 numpy==2.2.3
 omegaconf==2.3.0
 pandas==2.2.3
