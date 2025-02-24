@@ -34,13 +34,13 @@ def process_data(
         ) -> tuple[np.ndarray]:
     X_train, X_test, y_train, y_test = split_data(df, test_size, random_state)
     X_train_sm, y_train_sm = oversample_data(X_train, y_train)
-    X_train_sc, X_test_sc = normalize_data(X_train_sm.iloc[:, binary_data_col:],
-                                           X_test.iloc[:, binary_data_col:])
-    X_train_sm = X_train_sm.astype(float)
-    X_train_sm.iloc[:, 1:] = X_train_sc
-    X_test = X_test.astype(float)
-    X_test.iloc[:, 1:] = X_test_sc
-    X_train_slct, X_test_slct = select_features(X_train_sc, X_test_sc, y_train_sm, nb_of_features)
+    X_train_sc, X_test_sc = normalize_data(X_train_sm,
+                                           X_test,
+                                           binary_data_col)
+    X_train_slct, X_test_slct = select_features(X_train_sc, 
+                                                X_test_sc, 
+                                                y_train_sm, 
+                                                nb_of_features)
 
     return X_train_slct, X_test_slct, y_train_sm, y_test
 

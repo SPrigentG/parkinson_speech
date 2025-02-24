@@ -51,7 +51,7 @@ def split_id(
                                              Defaults to None.
 
     Returns:
-        tuple[pd.Series]: _description_
+        tuple[pd.Series]: ids selected for train and test data
     """
     number_of_individuals = len(target)
     number_of_replicates = target.reset_index().groupby('index').count().iloc[0,0]
@@ -83,7 +83,7 @@ def oversample_data(
     return imb_data_sm, target_sm
 
 
-def normalize_data(
+def normalize_non_binary_data(
         train_data: pd.DataFrame, test_data: pd.DataFrame
         ) -> tuple[np.ndarray]:
     """Use Standard Scaler to normalize data
@@ -101,6 +101,46 @@ def normalize_data(
     test_data_scaled = sc.transform(test_data)
 
     return train_data_scaled, test_data_scaled
+
+
+def normalize_data(
+        train_data: pd.DataFrame, test_data: pd.DataFrame, 
+        binary_features_col: list[str] | str
+        ) -> tuple[pd.DataFrame]:
+    """Calculate and apply normalization to train dataset
+    and apply it to test dataset.
+    Features listed in binary_features_col will be excluded
+    from normalization if they exist in the datasets.
+
+    Args:
+        train_data (pd.DataFrame): train dataset to calculate normalization
+                                   from and apply to it.
+        test_data (pd.DataFrame): test dataset where normalization will be
+                                  only applied on.
+        binary_features_col (list[str] | str): name of features to exclude
+                                               from normalization
+
+    Returns:
+        tuple[pd.DataFrame]: normalized train and test datasets
+    """
+    try:
+        train_binary_feat = train_data[binary_features_col]
+        train_data.drop(columns=binary_features_col, inplace=True)
+        test_binary_feat = test_data[binary_features_col]
+        test_data.drop(columns=binary_features_col, inplace=True)
+    except:
+        train_binary_feat = pd.DataFrame()
+        test_binary_feat = pd.DataFrame()
+    
+    train_data_sc, test_data_sc = normalize_non_binary_data(train_data, test_data)
+
+    train_data_sc = pd.DataFrame(train_data_sc, columns=train_data.columns)
+    test_data_sc = pd.DataFrame(test_data_sc, columns=test_data.columns)
+
+    train_data_sc = pd.concat([train_data_sc, train_binary_feat], axis=1)
+    test_data_sc = pd.concat([test_data_sc, test_binary_feat], axis=1)
+
+    return train_data_sc, test_data_sc
 
 
 def select_features(
