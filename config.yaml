@@ -1,6 +1,8 @@
 header: [0, 1]
 index: [0]
 
+target_col: 'class'
+
 test_size: 0.2
 
 binary_columns: 'gender'

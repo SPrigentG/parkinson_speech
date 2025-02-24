@@ -1,7 +1,6 @@
 import argparse
 
 import pandas as pd
-import numpy as np
 from omegaconf import OmegaConf
 from sklearn.svm import SVC
 from sklearn.ensemble import AdaBoostClassifier
@@ -28,11 +27,37 @@ def __create_parser():
 
 
 def process_data(
-        df: pd.DataFrame, binary_data_col: int, 
+        df: pd.DataFrame, target_col: str,
+        binary_data_col: int, 
         test_size: float, random_state: int,
         nb_of_features: int
-        ) -> tuple[np.ndarray]:
-    X_train, X_test, y_train, y_test = split_data(df, test_size, random_state)
+        ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+    """Take data and apply pre-processing.
+    Pre-processing is a 4 step process that can only be applied to
+    clean data. The process will split data in train and test datasets,
+    then it will oversample the data using the SMOTE technique,
+    then it will calculate and apply normalization to the train
+    data (with the exception of specified features), apply
+    normalization to the test dataset and finally select a 
+    limited number of features based on the scoring on an
+    F-test. This function will return a train dataset, a test dataset
+    and their corresponding targets.
+
+    Args:
+        df (pd.DataFrame): original data
+        target_col (str): name of the column in df containing the classes
+        binary_data_col (int): name of features that are binary and should 
+                               be excluded from normalization
+        test_size (float): size of the fraction of df that should be kept for
+                           model testing
+        random_state (int): seed used for splitting the data in a reproducible manner
+        nb_of_features (int): number of features to select in dataset
+
+    Returns:
+        tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]: 
+            processed train and test dataset, with their respective targets
+    """
+    X_train, X_test, y_train, y_test = split_data(df, target_col, test_size, random_state)
     X_train_sm, y_train_sm = oversample_data(X_train, y_train)
     X_train_sc, X_test_sc = normalize_data(X_train_sm,
                                            X_test,
@@ -54,7 +79,8 @@ def main(args):
     df = pd.read_csv(args['data_file'], header=header, index_col=index)
     if len(header) > 1:
         df.columns = df.columns.droplevel()
-    X_train, X_test, y_train, y_test = process_data(df, 
+    X_train, X_test, y_train, y_test = process_data(df,
+                                                    conf['target_col'],
                                                     conf['binary_columns'], 
                                                     conf['test_size'], 
                                                     random_state, 

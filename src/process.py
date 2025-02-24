@@ -7,12 +7,14 @@ from sklearn.feature_selection import SelectKBest, f_classif
 
 
 def split_data(
-        df: pd.DataFrame, test_size: float, random_state: int | None = None
+        df: pd.DataFrame, target_col: str,
+        test_size: float, random_state: int | None = None
         ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
     """Split dataframe into a train dataset and a test dataset
 
     Args:
         df (pd.DataFrame): dataframe containing all observations and all features
+        target_col (str): name of the column containing the target
         test_size (float): size of the fraction of df to use as test dataset
         random_state (int | None, optional): seed used to reproduce result
                                              Defaults to None.
@@ -21,14 +23,15 @@ def split_data(
         tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]: 
             train dataset, test dataset, target for train, target for test
     """
-    id_class = df.iloc[:, -1]
+    id_class = df[target_col]
     train_id, test_id = split_id(id_class, test_size, random_state)
-    train = df.loc[train_id].sample(frac=1, random_state=random_state)
-    test = df.loc[test_id].sample(frac=1, random_state=random_state)
-    X_train = train.iloc[:, :-1]
-    y_train = train.iloc[:, -1]
-    X_test = test.iloc[:, :-1]
-    y_test = test.iloc[:, -1]
+    X_train = df.loc[train_id].sample(frac=1, random_state=random_state)
+    X_test = df.loc[test_id].sample(frac=1, random_state=random_state)
+
+    y_train = X_train[target_col]
+    X_train.drop(columns=target_col, inplace=True)
+    y_test = X_test[target_col]
+    X_test.drop(columns=target_col, inplace=True)
 
     X_train.reset_index(drop=True, inplace=True)
     X_test.reset_index(drop=True, inplace=True)
@@ -158,6 +161,9 @@ def select_features(
     Returns:
         tuple[pd.DataFrame]: train_data and test_data reduced to the number of features required
     """
+    if not isinstance(nb_of_features, int):
+        nb_of_features = train_data.shape[1]
+        
     selector = SelectKBest(score_func=f_classif, k=nb_of_features)
     train_slct = selector.fit_transform(train_data, train_target)
     test_slct = selector.transform(test_data)
