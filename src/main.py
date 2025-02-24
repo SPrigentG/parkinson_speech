@@ -1,14 +1,16 @@
 import argparse
 from os import makedirs
+from os.path import join
 
 import pandas as pd
+import numpy as np
 from omegaconf import OmegaConf
 from sklearn.svm import SVC
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.neural_network import MLPClassifier
 
 from process import split_data, oversample_data, normalize_data, select_features
-from plot import plot_confusion_matrix, save_cls_report
+from plot import plot_confusion_matrix, plot_roc, save_cls_report
 
 
 def __create_parser():
@@ -71,6 +73,32 @@ def process_data(
     return X_train_slct, X_test_slct, y_train_sm, y_test
 
 
+def plot_results(
+        y_test: np.ndarray, y_pred: np.ndarray,
+        folder_path: str, model_name: str
+        ) -> None:
+    """Compute confusion matrix, ROC curve and
+    classification report based on prediction and save
+    them into a specific path, for a given model.
+
+    Args:
+        y_test (np.ndarray): true labels
+        y_pred (np.ndarray): predicted labes
+        folder_path (str): output folder
+        model_name (str): name given to the model
+    """
+    base_path = join(folder_path, model_name)
+    plot_confusion_matrix(y_test,
+                          y_pred,
+                          base_path + '_cm.png')
+    plot_roc(y_test,
+             y_pred,
+             base_path + '_roc.png')
+    save_cls_report(y_test,
+                    y_pred,
+                    base_path + '_cls.csv')
+
+
 def main(args):
     """Load data, process it, trains 3 models and displays results"""
     conf = OmegaConf.load(args['config_file'])
@@ -92,26 +120,24 @@ def main(args):
                                                     random_state,
                                                     conf['nb_of_features'])
 
-    makedirs('out/', exist_ok=True)
+    folder_path = 'out'
+    makedirs(folder_path, exist_ok=True)
 
     svc_clf = SVC()
     svc_clf.fit(X_train, y_train)
     y_pred_svc = svc_clf.predict(X_test)
-    plot_confusion_matrix(y_test, y_pred_svc, 'out/cm_SVC.png')
-    save_cls_report(y_test, y_pred_svc, 'out/cls_SVC.csv')
+    plot_results(y_test, y_pred_svc, folder_path, 'svc')
 
     ada_clf = AdaBoostClassifier(n_estimators=100)
     ada_clf.fit(X_train, y_train)
     y_pred_ada = ada_clf.predict(X_test)
-    plot_confusion_matrix(y_test, y_pred_ada, 'out/cm_Ada.png')
-    save_cls_report(y_test, y_pred_svc, 'out/cls_Ada.csv')
+    plot_results(y_test, y_pred_ada, folder_path, 'ada')
 
     mlp_clf = MLPClassifier(hidden_layer_sizes=(512, 256, 128, 64),
                             early_stopping=True)
     mlp_clf.fit(X_train, y_train)
     y_pred_mlp = mlp_clf.predict(X_test)
-    plot_confusion_matrix(y_test, y_pred_mlp, 'out/cm_MLP.png')
-    save_cls_report(y_test, y_pred_svc, 'out/cls_MLP.csv')
+    plot_results(y_test, y_pred_mlp, folder_path, 'mlp')
 
 
 if __name__ == '__main__':
