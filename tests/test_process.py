@@ -1,11 +1,11 @@
 import math
 from random import randint
 from sys import path
+from collections import Counter
 
 import pytest
 import pandas as pd
 import numpy as np
-from collections import Counter
 
 path.append('./src')
 
@@ -67,10 +67,8 @@ def test_oversample_data(get_df_data, get_target):
 
 def test_normalize(get_df_data, get_target):
     df = pd.concat([get_df_data, get_target], axis=1)
-    X_train, X_test, _, _ = split_data(df, 0.2, None)
-    X_train_sc, X_test_sc = normalize_data(X_train, X_test)
+    X_train, X_test, _, _ = split_data(df, get_target.name, 0.2, None)
+    X_train_sc, X_test_sc = normalize_data(X_train, X_test, '')
 
-    random_feature = randint(0, len(get_df_data.columns))
-    assert round(np.mean(X_train_sc[:, random_feature]), 1) == 0
-
-
+    random_feature = randint(0, get_df_data.shape[1])
+    assert round(np.mean(X_train_sc.iloc[:, random_feature]), 1) == 0

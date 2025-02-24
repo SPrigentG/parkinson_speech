@@ -131,7 +131,7 @@ def normalize_data(
         train_data.drop(columns=binary_features_col, inplace=True)
         test_binary_feat = test_data[binary_features_col]
         test_data.drop(columns=binary_features_col, inplace=True)
-    except ValueError:
+    except KeyError:
         train_binary_feat = pd.DataFrame()
         test_binary_feat = pd.DataFrame()
 
