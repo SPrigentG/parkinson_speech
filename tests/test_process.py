@@ -68,7 +68,17 @@ def test_oversample_data(get_df_data, get_target):
 def test_normalize(get_df_data, get_target):
     df = pd.concat([get_df_data, get_target], axis=1)
     X_train, X_test, _, _ = split_data(df, get_target.name, 0.2, None)
-    X_train_sc, X_test_sc = normalize_data(X_train, X_test, '')
+    X_train_sc, _ = normalize_data(X_train, X_test, '')
 
     random_feature = randint(0, get_df_data.shape[1])
     assert round(np.mean(X_train_sc.iloc[:, random_feature]), 1) == 0
+
+
+def test_select(get_df_data, get_target):
+    df = pd.concat([get_df_data, get_target], axis=1)
+    X_train, X_test, y_train, _ = split_data(df, get_target.name, 0.2, None)
+    X_train_slct, X_test_slct = select_features(X_train,
+                                                X_test,
+                                                y_train,
+                                                1)
+    assert X_train_slct.shape[1] == X_test_slct.shape[1]
