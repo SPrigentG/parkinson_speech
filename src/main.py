@@ -5,6 +5,7 @@ from pickle import dump
 
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from omegaconf import OmegaConf
 from sklearn.svm import SVC
 from sklearn.ensemble import AdaBoostClassifier
@@ -13,7 +14,12 @@ from sklearn.neural_network import MLPClassifier
 from process import (
     split_data, oversample_data, normalize_data, select_features
     )
-from plot import plot_confusion_matrix, plot_roc, save_cls_report
+from plot import (
+    plot_confusion_matrix,
+    plot_roc,
+    save_cls_report,
+    plot_explainability
+    )
 
 
 def __create_parser():
@@ -38,7 +44,7 @@ def process_data(
         test_size: float, random_state: int,
         nb_of_features: int,
         enable_oversample: bool = True
-        ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+        ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series, np.ndarray]:
     """Take data and apply pre-processing.
     Pre-processing is a 4 step process that can only be applied to
     clean data. The process will split data in train and test datasets,
@@ -63,8 +69,9 @@ def process_data(
                                             in train, Defaults to True.
 
     Returns:
-        tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]: 
-            processed train and test dataset, with their respective targets
+        tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series, np.ndarray]: 
+            processed train and test dataset, with their respective targets,
+            name of the features selected
     """
     # Split the data in train and test in a reproducible manner,
     # this allows to compare model between each other.
@@ -85,12 +92,12 @@ def process_data(
 
     # Select a limited number of features based on train data.
     # Apply to test data.
-    X_train_slct, X_test_slct = select_features(X_train_sc,
-                                                X_test_sc,
-                                                y_train,
-                                                nb_of_features)
+    X_train_slct, X_test_slct, features_slct = select_features(X_train_sc,
+                                                               X_test_sc,
+                                                               y_train,
+                                                               nb_of_features)
 
-    return X_train_slct, X_test_slct, y_train, y_test
+    return X_train_slct, X_test_slct, y_train, y_test, features_slct
 
 
 def plot_results(
@@ -122,6 +129,7 @@ def plot_results(
                     y_pred,
                     base_path + '_cls.csv',
                     verbose)
+    plt.close()
 
 
 def main(args):
@@ -138,13 +146,17 @@ def main(args):
         df.columns = df.columns.droplevel()
         nb_of_header -= 1
 
-    X_train, X_test, y_train, y_test = process_data(df,
-                                                    conf['target_col'],
-                                                    conf['binary_columns'],
-                                                    conf['test_size'],
-                                                    random_state,
-                                                    conf['nb_of_features'],
-                                                    conf['enable_oversample'])
+    process_result = process_data(df,
+                                  conf['target_col'],
+                                  conf['binary_columns'],
+                                  conf['test_size'],
+                                  random_state,
+                                  conf['nb_of_features'],
+                                  conf['enable_oversample'])
+    X_train = process_result[0]
+    X_test = process_result[1]
+    y_train = process_result[2]
+    y_test = process_result[3]
 
     folder_path = 'out'
     makedirs(folder_path, exist_ok=True)
@@ -171,6 +183,15 @@ def main(args):
     plot_results(y_test, y_pred_mlp, folder_path, 'mlp', verbose)
     with open(join(folder_path, 'mlp.pkl'), 'wb') as f:
         dump(mlp_clf, f)
+
+    if conf['compute_shap']:
+        out_shap = {'out/svc_shap.png': svc_clf,
+                    'out/ada_shap.png': ada_clf,
+                    'out/mlp_shap.png': mlp_clf}
+        features_slct = process_result[4]
+        for path, model in out_shap.items():
+            plot_explainability(model, X_train, X_test, features_slct, path)
+            plt.close()
 
 
 if __name__ == '__main__':

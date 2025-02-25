@@ -29,3 +29,7 @@ nb_of_features: 50
 
 # If True, show classification report in terminal.
 verbose: True
+
+# If True, compute and save SHAP graph, which shows importance of
+# the different features to give prediction by the model.
+compute_shap: False

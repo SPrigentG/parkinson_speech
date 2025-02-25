@@ -150,7 +150,7 @@ def normalize_data(
 def select_features(
         train_data: pd.DataFrame, test_data: pd.DataFrame,
         train_target: pd.Series, nb_of_features: int = 50
-        ) -> tuple[pd.DataFrame]:
+        ) -> tuple[pd.DataFrame, pd.DataFrame, np.ndarray]:
     """Reduce complexity of dataset by selecting best features based on 
     scoring on F-test.
 
@@ -164,7 +164,8 @@ def select_features(
 
     Returns:
         tuple[pd.DataFrame]: train_data and test_data reduced to 
-                             the number of features required
+                             the number of features required,
+                             name of features selected
     """
     if not isinstance(nb_of_features, int):
         nb_of_features = train_data.shape[1]
@@ -172,5 +173,6 @@ def select_features(
     selector = SelectKBest(score_func=f_classif, k=nb_of_features)
     train_slct = selector.fit_transform(train_data, train_target)
     test_slct = selector.transform(test_data)
+    features_slct = selector.get_feature_names_out(train_data.columns)
 
-    return train_slct, test_slct
+    return train_slct, test_slct, features_slct
