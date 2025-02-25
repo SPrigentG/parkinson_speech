@@ -19,6 +19,10 @@ binary_columns: 'gender'
 # output.
 random_state: 1 # int
 
+# Enable oversampling of minority class.
+# SMOTE algorith is used.
+enable_oversample: True
+
 # Number of features selected to train model.
 # If invalid input is given, all features will be kept.
 nb_of_features: 50

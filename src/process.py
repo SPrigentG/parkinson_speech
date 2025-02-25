@@ -135,7 +135,8 @@ def normalize_data(
         train_binary_feat = pd.DataFrame()
         test_binary_feat = pd.DataFrame()
 
-    train_data_sc, test_data_sc = normalize_non_binary_data(train_data, test_data)
+    train_data_sc, test_data_sc = normalize_non_binary_data(train_data,
+                                                            test_data)
 
     train_data_sc = pd.DataFrame(train_data_sc, columns=train_data.columns)
     test_data_sc = pd.DataFrame(test_data_sc, columns=test_data.columns)
@@ -150,16 +151,20 @@ def select_features(
         train_data: pd.DataFrame, test_data: pd.DataFrame,
         train_target: pd.Series, nb_of_features: int = 50
         ) -> tuple[pd.DataFrame]:
-    """Reduce complexity of dataset by selecting best features based on scoring on F-test
+    """Reduce complexity of dataset by selecting best features based on 
+    scoring on F-test.
 
     Args:
-        train_data (pd.DataFrame): data on which selection will be based and applied
+        train_data (pd.DataFrame): data on which selection will be based 
+                                   and applied on
         test_data (pd.DataFrame): data where selection will also be applied
         train_target (pd.Series): class corresponding to the train_data
-        nb_of_features (int, optional): number of features to keep. Defaults to 50.
+        nb_of_features (int, optional): number of features to keep. 
+                                        Defaults to 50.
 
     Returns:
-        tuple[pd.DataFrame]: train_data and test_data reduced to the number of features required
+        tuple[pd.DataFrame]: train_data and test_data reduced to 
+                             the number of features required
     """
     if not isinstance(nb_of_features, int):
         nb_of_features = train_data.shape[1]

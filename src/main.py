@@ -10,7 +10,9 @@ from sklearn.svm import SVC
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.neural_network import MLPClassifier
 
-from process import split_data, oversample_data, normalize_data, select_features
+from process import (
+    split_data, oversample_data, normalize_data, select_features
+    )
 from plot import plot_confusion_matrix, plot_roc, save_cls_report
 
 
@@ -34,7 +36,8 @@ def process_data(
         df: pd.DataFrame, target_col: str,
         binary_data_col: int,
         test_size: float, random_state: int,
-        nb_of_features: int
+        nb_of_features: int,
+        enable_oversample: bool = True
         ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
     """Take data and apply pre-processing.
     Pre-processing is a 4 step process that can only be applied to
@@ -54,24 +57,40 @@ def process_data(
                                be excluded from normalization
         test_size (float): size of the fraction of df that should be kept for
                            model testing
-        random_state (int): seed used for splitting the data in a reproducible manner
+        random_state (int): seed used for splitting data in a reproducible manner
         nb_of_features (int): number of features to select in dataset
+        enable_oversample (bool, optional): if True, oversample minority class
+                                            in train, Defaults to True.
 
     Returns:
         tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]: 
             processed train and test dataset, with their respective targets
     """
-    X_train, X_test, y_train, y_test = split_data(df, target_col, test_size, random_state)
-    X_train_sm, y_train_sm = oversample_data(X_train, y_train)
-    X_train_sc, X_test_sc = normalize_data(X_train_sm,
+    # Split the data in train and test in a reproducible manner,
+    # this allows to compare model between each other.
+    X_train, X_test, y_train, y_test = split_data(df,
+                                                  target_col,
+                                                  test_size,
+                                                  random_state)
+
+    # Data is imbalanced, oversample minority class in the train
+    # dataset. Can be disabled.
+    if enable_oversample:
+        X_train, y_train = oversample_data(X_train, y_train)
+
+    # Normalize train data, apply to test data.
+    X_train_sc, X_test_sc = normalize_data(X_train,
                                            X_test,
                                            binary_data_col)
+
+    # Select a limited number of features based on train data.
+    # Apply to test data.
     X_train_slct, X_test_slct = select_features(X_train_sc,
                                                 X_test_sc,
-                                                y_train_sm,
+                                                y_train,
                                                 nb_of_features)
 
-    return X_train_slct, X_test_slct, y_train_sm, y_test
+    return X_train_slct, X_test_slct, y_train, y_test
 
 
 def plot_results(
@@ -106,7 +125,7 @@ def plot_results(
 
 
 def main(args):
-    """Load data, process it, trains 3 models and displays results"""
+    """Load data, process it, trains 3 models and displays results."""
     conf = OmegaConf.load(args['config_file'])
     header = list(conf['header'])
     index = list(conf['index'])
@@ -124,7 +143,8 @@ def main(args):
                                                     conf['binary_columns'],
                                                     conf['test_size'],
                                                     random_state,
-                                                    conf['nb_of_features'])
+                                                    conf['nb_of_features'],
+                                                    conf['enable_oversample'])
 
     folder_path = 'out'
     makedirs(folder_path, exist_ok=True)
