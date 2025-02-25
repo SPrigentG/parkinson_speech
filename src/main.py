@@ -1,6 +1,7 @@
 import argparse
 from os import makedirs
 from os.path import join
+from pickle import dump
 
 import pandas as pd
 import numpy as np
@@ -133,17 +134,23 @@ def main(args):
     svc_clf.fit(X_train, y_train)
     y_pred_svc = svc_clf.predict(X_test)
     plot_results(y_test, y_pred_svc, folder_path, 'svc', verbose)
+    with open(join(folder_path, 'svc.pkl'), 'wb') as f:
+        dump(svc_clf, f)
 
     ada_clf = AdaBoostClassifier(n_estimators=100)
     ada_clf.fit(X_train, y_train)
     y_pred_ada = ada_clf.predict(X_test)
     plot_results(y_test, y_pred_ada, folder_path, 'ada', verbose)
+    with open(join(folder_path, 'ada.pkl'), 'wb') as f:
+        dump(ada_clf, f)
 
     mlp_clf = MLPClassifier(hidden_layer_sizes=(512, 256, 128, 64),
                             early_stopping=True)
     mlp_clf.fit(X_train, y_train)
     y_pred_mlp = mlp_clf.predict(X_test)
     plot_results(y_test, y_pred_mlp, folder_path, 'mlp', verbose)
+    with open(join(folder_path, 'mlp.pkl'), 'wb') as f:
+        dump(mlp_clf, f)
 
 
 if __name__ == '__main__':
