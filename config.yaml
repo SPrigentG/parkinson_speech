@@ -27,6 +27,9 @@ enable_oversample: True # bool
 # If invalid input is given, all features will be kept.
 nb_of_features: 50 # int
 
+# Path where to output the data once processed.
+processed_data_outpath: './in/pd_speech_features_processed.npz' # str
+
 # If True, show classification report in terminal.
 verbose: True # bool
 

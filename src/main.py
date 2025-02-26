@@ -6,7 +6,7 @@ from pickle import dump
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from omegaconf import OmegaConf
+from omegaconf import OmegaConf, DictConfig
 from sklearn.svm import SVC
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.neural_network import MLPClassifier
@@ -25,7 +25,7 @@ from plot import (
 def __create_parser():
     """Parse user inputs."""
     parser = argparse.ArgumentParser(description='Process data')
-    parser.add_argument('-d', '--data_file',
+    parser.add_argument('-r', '--raw_data_file',
                         action="store", type=str,
                         help='path to csv file with data',
                         default='./in/pd_speech_features_AdS.csv')
@@ -33,9 +33,69 @@ def __create_parser():
                         action="store", type=str,
                         help='path to config file to use',
                         default='config.yaml')
+    parser.add_argument('-p', '--processed_data',
+                        action=argparse.BooleanOptionalAction,
+                        help='use already processed data')
+    parser.add_argument('-d', '--processed_file',
+                        action="store", type=str,
+                        help='path to csv file with already processed data',
+                        default='./in/pd_speech_features_processed.npz')
     args = parser.parse_args()
 
     return args
+
+
+def load_data(
+        data_file: str, conf: DictConfig
+        ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series, np.ndarray]:
+    """Load data from data file and apply data processing
+
+    Args:
+        data_file (str): path to csv file with raw data
+        conf (DictConfig): config file with all parameters for
+                           processing
+
+    Returns:
+        tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series, np.ndarray]: 
+            processed train and test dataset, with their respective targets,
+            name of the features selected
+    """
+    header = list(conf['header'])
+    index = list(conf['index'])
+    random_state = conf['random_state']
+
+    df = pd.read_csv(data_file, header=header, index_col=index)
+
+    # If the header is composed of several level, drop until only
+    # one remains.
+    # TODO: do the same for index.
+    nb_of_header = len(header)
+    while nb_of_header > 1:
+        df.columns = df.columns.droplevel()
+        nb_of_header -= 1
+
+    process_result = process_data(df,
+                                  conf['target_col'],
+                                  conf['binary_columns'],
+                                  conf['test_size'],
+                                  random_state,
+                                  conf['nb_of_features'],
+                                  conf['enable_oversample'])
+
+    X_train = process_result[0]
+    X_test = process_result[1]
+    y_train = process_result[2]
+    y_test = process_result[3]
+    features_slct = process_result[4]
+
+    np.savez_compressed(conf['processed_data_outpath'],
+                        X_train = X_train,
+                        X_test = X_test,
+                        y_train = y_train,
+                        y_test = y_test,
+                        features_selected = features_slct)
+
+    return X_train, X_test, y_train, y_test, features_slct
 
 
 def process_data(
@@ -135,30 +195,29 @@ def plot_results(
 def main(args):
     """Load data, process it, trains 3 models and displays results."""
     conf = OmegaConf.load(args['config_file'])
-    header = list(conf['header'])
-    index = list(conf['index'])
-    random_state = conf['random_state']
+    raw_data_file = args['raw_data_file']
 
-    df = pd.read_csv(args['data_file'], header=header, index_col=index)
+    # Check if already processed file exist.
+    try:
+        process_result = np.load(args['processed_file'])
+    except FileNotFoundError:
+        process_result = []
 
-    # If the header is composed of several level, drop until only
-    # one remains. 
-    nb_of_header = len(header)
-    while nb_of_header > 1:
-        df.columns = df.columns.droplevel()
-        nb_of_header -= 1
-
-    process_result = process_data(df,
-                                  conf['target_col'],
-                                  conf['binary_columns'],
-                                  conf['test_size'],
-                                  random_state,
-                                  conf['nb_of_features'],
-                                  conf['enable_oversample'])
-    X_train = process_result[0]
-    X_test = process_result[1]
-    y_train = process_result[2]
-    y_test = process_result[3]
+    # If processed file exist and the user wants to use it, load dataset.
+    # Otherwise take raw data.
+    if args['processed_data'] and process_result != []:
+        X_train = process_result['X_train']
+        X_test = process_result['X_test']
+        y_train = process_result['y_train']
+        y_test = process_result['y_test']
+        features_slct = process_result['features_selected']
+    else:
+        process_result = load_data(raw_data_file, conf)
+        X_train = process_result[0]
+        X_test = process_result[1]
+        y_train = process_result[2]
+        y_test = process_result[3]
+        features_slct = process_result[4]
 
     folder_path = 'out'
     makedirs(folder_path, exist_ok=True)
@@ -193,7 +252,6 @@ def main(args):
         out_shap = {'out/svc_shap.png': svc_clf,
                     'out/ada_shap.png': ada_clf,
                     'out/mlp_shap.png': mlp_clf}
-        features_slct = process_result[4]
         for path, model in out_shap.items():
             plot_explainability(model, X_train, X_test, features_slct, path)
             plt.close()
