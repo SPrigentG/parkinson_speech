@@ -23,8 +23,12 @@ def split_data(
         tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]: 
             train dataset, test dataset, target for train, target for test
     """
+    # To split patient into train and test (one id should be in only one
+    # dataset), the split is made according to id.
     id_class = df[target_col]
     train_id, test_id = split_id(id_class, test_size, random_state)
+
+    # Select id of patient for each dataset and shuffle.
     X_train = df.loc[train_id].sample(frac=1, random_state=random_state)
     X_test = df.loc[test_id].sample(frac=1, random_state=random_state)
 
@@ -33,6 +37,7 @@ def split_data(
     y_test = X_test[target_col]
     X_test.drop(columns=target_col, inplace=True)
 
+    # Remove patient id.
     X_train.reset_index(drop=True, inplace=True)
     X_test.reset_index(drop=True, inplace=True)
 
@@ -58,8 +63,14 @@ def split_id(
     """
     number_of_individuals = len(target)
     number_of_replicates = target.reset_index().groupby('index').count().iloc[0,0]
+
+    # If one id is present more than once (replicates for an individual),
+    # drop replicated id before splitting.
     if number_of_replicates > 1:
         target = target.iloc[range(0, number_of_individuals, number_of_replicates)]
+
+    # Stratification is made on class to make sure that proportion of
+    # class is maintained in train and test.
     train_id, test_id = train_test_split(range(0, len(target)),
                                          test_size=test_size,
                                          random_state=random_state,
@@ -126,6 +137,9 @@ def normalize_data(
     Returns:
         tuple[pd.DataFrame]: normalized train and test datasets
     """
+    # If features should be excluded from normalization (because they are
+    # binary for example), data is separated and binary features are kept
+    # in a separated dataset. If not the dataset are empty.
     try:
         train_binary_feat = train_data[binary_features_col]
         train_data.drop(columns=binary_features_col, inplace=True)
@@ -141,6 +155,7 @@ def normalize_data(
     train_data_sc = pd.DataFrame(train_data_sc, columns=train_data.columns)
     test_data_sc = pd.DataFrame(test_data_sc, columns=test_data.columns)
 
+    # Re-assemble dataset with normalized and non-normalized data.
     train_data_sc = pd.concat([train_data_sc, train_binary_feat], axis=1)
     test_data_sc = pd.concat([test_data_sc, test_binary_feat], axis=1)
 
@@ -150,7 +165,7 @@ def normalize_data(
 def select_features(
         train_data: pd.DataFrame, test_data: pd.DataFrame,
         train_target: pd.Series, nb_of_features: int = 50
-        ) -> tuple[pd.DataFrame, pd.DataFrame, np.ndarray]:
+        ) -> tuple[pd.DataFrame, pd.DataFrame, list[str]]:
     """Reduce complexity of dataset by selecting best features based on 
     scoring on F-test.
 
@@ -163,16 +178,21 @@ def select_features(
                                         Defaults to 50.
 
     Returns:
-        tuple[pd.DataFrame]: train_data and test_data reduced to 
-                             the number of features required,
-                             name of features selected
+        tuple[pd.DataFrame, pd.DataFrame, list[str]]: 
+            train_data and test_data reduced to the number of features 
+            required, name of features selected.
     """
-    if not isinstance(nb_of_features, int):
-        nb_of_features = train_data.shape[1]
+    # If number of features to select is not a number or too big, 
+    # all features are selected.
+    if (not isinstance(nb_of_features, int) or \
+        nb_of_features > train_data.shape[1]):
+        return train_data, test_data, []
 
+    # TODO: add possibility to choose from a serie of different
+    # selector. Namely mRMR and REF would be nice.
     selector = SelectKBest(score_func=f_classif, k=nb_of_features)
     train_slct = selector.fit_transform(train_data, train_target)
     test_slct = selector.transform(test_data)
     features_slct = selector.get_feature_names_out(train_data.columns)
 
-    return train_slct, test_slct, features_slct
+    return train_slct, test_slct, list(features_slct)

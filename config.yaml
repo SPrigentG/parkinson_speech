@@ -21,15 +21,15 @@ random_state: 1 # int
 
 # Enable oversampling of minority class.
 # SMOTE algorith is used.
-enable_oversample: True
+enable_oversample: True # bool
 
 # Number of features selected to train model.
 # If invalid input is given, all features will be kept.
-nb_of_features: 50
+nb_of_features: 50 # int
 
 # If True, show classification report in terminal.
-verbose: True
+verbose: True # bool
 
 # If True, compute and save SHAP graph, which shows importance of
 # the different features to give prediction by the model.
-compute_shap: False
+compute_shap: False # bool

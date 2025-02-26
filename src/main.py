@@ -141,6 +141,8 @@ def main(args):
 
     df = pd.read_csv(args['data_file'], header=header, index_col=index)
 
+    # If the header is composed of several level, drop until only
+    # one remains. 
     nb_of_header = len(header)
     while nb_of_header > 1:
         df.columns = df.columns.droplevel()
@@ -162,6 +164,7 @@ def main(args):
     makedirs(folder_path, exist_ok=True)
     verbose = conf['verbose']
 
+    # Train the 3 models and save plot result to out folder.
     svc_clf = SVC()
     svc_clf.fit(X_train, y_train)
     y_pred_svc = svc_clf.predict(X_test)
@@ -184,6 +187,8 @@ def main(args):
     with open(join(folder_path, 'mlp.pkl'), 'wb') as f:
         dump(mlp_clf, f)
 
+    # Warning: computation of explainability graph with SHAP can take several
+    # minutes.
     if conf['compute_shap']:
         out_shap = {'out/svc_shap.png': svc_clf,
                     'out/ada_shap.png': ada_clf,
