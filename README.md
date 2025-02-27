@@ -59,3 +59,6 @@ pytest
 ```
 ### Comment
 The testing of this repo is for now limited to the happy path. Further testing is needed. In addition, only functions from the process.py script are tested.
+
+## Other
+If you want to check on how I did my EDA and part of my thought process on this problem, you can checkout on the branch called 'notebooks' and read my jupyter notebook drafts.
