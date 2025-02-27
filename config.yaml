@@ -13,7 +13,7 @@ test_size: 0.2 # float between 0 and 1
 # name of a non-binary feature is given, it will not be
 # normalized. If the name given is invalid, all features
 # will be normalized.
-binary_columns: 'gender'
+binary_columns: 'gender' # str or list[str]
 
 # Seed used only during splitting of the data, to give reproducible
 # output.
