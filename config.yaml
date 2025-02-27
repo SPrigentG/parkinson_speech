@@ -1,0 +1,38 @@
+# Row(s) for header and column for index in the original data file.
+header: [0, 1] # list[int]
+index: [0] # list[int]
+
+# Name of the column in data containing the class.
+target_col: 'class' # str
+
+# Size of the fraction of data file to use as test dataset.
+test_size: 0.2 # float between 0 and 1
+
+# Name of the columns that are binary and therefore should not 
+# be normalized. The binary status is not checked, so if a 
+# name of a non-binary feature is given, it will not be
+# normalized. If the name given is invalid, all features
+# will be normalized.
+binary_columns: 'gender' # str or list[str]
+
+# Seed used only during splitting of the data, to give reproducible
+# output.
+random_state: 1 # int
+
+# Enable oversampling of minority class.
+# SMOTE algorith is used.
+enable_oversample: True # bool
+
+# Number of features selected to train model.
+# If invalid input is given, all features will be kept.
+nb_of_features: 50 # int
+
+# Path where to output the data once processed.
+processed_data_outpath: './in/pd_speech_features_processed.npz' # str
+
+# If True, show classification report in terminal.
+verbose: True # bool
+
+# If True, compute and save SHAP graph, which shows importance of
+# the different features to give prediction by the model.
+compute_shap: False # bool
