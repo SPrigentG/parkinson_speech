@@ -90,6 +90,6 @@ def plot_explainability(
     shap.summary_plot(shap_values,
                       test_data,
                       feature_names=features_names,
-                      plot_type="bar")
+                      plot_type="bar",
+                      show=False)
     plt.savefig(path)
-    plt.close()

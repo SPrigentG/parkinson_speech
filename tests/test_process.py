@@ -28,7 +28,9 @@ def get_df_data():
     data = {'feat1': [0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1,
                        0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1],
             'feat2': [34, 11, 0, 86, 45, 6, 34, 11, 0, 86, 45, 6, 2,
-                      34, 11, 0, 86, 45, 6, 34, 11, 0, 86, 45, 6, 2]}
+                      34, 11, 0, 86, 45, 6, 34, 11, 0, 86, 45, 6, 2],
+            'feat3': [3, 1, 0, 8, 5, 16, 4, 11, 0, 5, 4, 6, 2,
+                      34, 10, 1, 6, 41, 8, 4, 11, 0, 8, 4, 8, 0]}
     df_data = pd.DataFrame(data)
     return df_data
 
@@ -77,7 +79,7 @@ def test_normalize(get_df_data, get_target):
     X_train, X_test, _, _ = split_data(df, get_target.name, 0.2, None)
     X_train_sc, _ = normalize_data(X_train, X_test, '')
 
-    random_feature = randint(0, get_df_data.shape[1])
+    random_feature = randint(0, X_train_sc.shape[1]-1)
     assert round(np.mean(X_train_sc.iloc[:, random_feature]), 1) == 0
 
 

@@ -22,6 +22,9 @@ from plot import (
     )
 
 
+# TODO: add logger everywhere to give better description of
+# process to user in terminal. Including errors in dataset format.
+
 def __create_parser():
     """Parse user inputs."""
     parser = argparse.ArgumentParser(description='Process data')
@@ -185,6 +188,9 @@ def plot_results(
     plot_roc(y_test,
              y_pred,
              base_path + '_roc.png')
+
+    if verbose:
+        print(f'Classification report for {model_name} model.')
     save_cls_report(y_test,
                     y_pred,
                     base_path + '_cls.csv',
@@ -224,6 +230,7 @@ def main(args):
     verbose = conf['verbose']
 
     # Train the 3 models and save plot result to out folder.
+    # TODO: remove path hardcoding.
     svc_clf = SVC()
     svc_clf.fit(X_train, y_train)
     y_pred_svc = svc_clf.predict(X_test)
@@ -254,7 +261,6 @@ def main(args):
                     'out/mlp_shap.png': mlp_clf}
         for path, model in out_shap.items():
             plot_explainability(model, X_train, X_test, features_slct, path)
-            plt.close()
 
 
 if __name__ == '__main__':
